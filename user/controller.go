@@ -3,11 +3,13 @@ package user
 import (
 	"GinDemo/db"
 	"GinDemo/uilty"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
+// 增加用户
 func Add(c *gin.Context) {
 	var user User
 	if err := c.ShouldBind(&user); err != nil {
@@ -22,6 +24,7 @@ func Add(c *gin.Context) {
 	c.JSON(http.StatusOK, uilty.SuccessResponse[string](nil))
 }
 
+// 删除用户
 func Delete(c *gin.Context) {
 	id := c.Param("id")
 	queryRt := db.Db.Where("user_id = ?", id).First(&User{})
@@ -37,6 +40,7 @@ func Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, uilty.SuccessResponse[string](nil))
 }
 
+// 跟新用户
 func Update(c *gin.Context) {
 	id := c.Param("id")
 	num, err := strconv.Atoi(id)
@@ -80,6 +84,7 @@ func Update(c *gin.Context) {
 
 }
 
+// 获取全部用户
 func Get(c *gin.Context) {
 	var users []User
 	result := db.Db.Find(&users)
@@ -90,6 +95,7 @@ func Get(c *gin.Context) {
 	c.JSON(http.StatusOK, uilty.SuccessResponseArray(&users))
 }
 
+// 获取单个用户
 func ById(c *gin.Context) {
 	id := c.Param("id")
 	num, err := strconv.Atoi(id)
@@ -105,6 +111,7 @@ func ById(c *gin.Context) {
 	c.JSON(http.StatusOK, uilty.SuccessResponse(dbById(num)))
 }
 
+// 数据库根据id查询用户
 func dbById(id int) *User {
 	var user User
 	if err := db.Db.Where("user_id = ?", id).First(&user).Error; err != nil {
