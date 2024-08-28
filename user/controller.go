@@ -86,8 +86,7 @@ func Update(c *gin.Context) {
 
 // 获取全部用户
 func Get(c *gin.Context) {
-	var users []User
-	result := db.Db.Find(&users)
+	var users []User = db.FindByLimit(1000)
 	if result.Error != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: result.Error.Error()})
 		return

@@ -1,7 +1,12 @@
 package db
 
+import (
+	"errors"
+)
+
 type Model interface {
 	TableName() string
+	Id() *any
 }
 
 type PageContext struct {
@@ -33,25 +38,26 @@ func FindByLimit[T Model](maxLimit int) []T {
 	return retval
 }
 
-func Create[T Model](model T) error {
+func Create[T Model](model *T) error {
 	result := Db.Create(&model)
 	return result.Error
 }
 
-func FindById[T Model, ID any](id ID) (T, error) {
-	var model T
+func FindById[T Model, ID any](model T, id ID) (T, error) {
 	result := Db.First(&model, id)
 	return model, result.Error
 }
 
 // 跟新model，前提是这个model必须带有id
 func UpdateById[T Model](model T) error {
+	if model.Id() == nil {
+		return errors.New("id can't be nil")
+	}
 	result := Db.Save(&model)
 	return result.Error
 }
 
-func DeleteById[T Model, ID any](id ID) error {
-	var model T
+func DeleteById[T Model, ID any](model T, id ID) error {
 	result := Db.Delete(&model, id)
 	return result.Error
 }
