@@ -6,7 +6,7 @@ import (
 
 type Model interface {
 	TableName() string
-	Id() *any
+	IdValue() any
 }
 
 type PageContext struct {
@@ -18,24 +18,24 @@ func PageFind[T Model](ctx PageContext) ([]T, error) {
 	var retval []T
 	offset := (ctx.Page - 1) * ctx.PageSize
 	limit := ctx.PageSize
-	result := Db.Find(&retval).Offset(offset).Limit(limit)
+	result := Db.Offset(offset).Limit(limit).Find(&retval)
 	if result.Error != nil {
 		return []T{}, result.Error
 	}
 	return retval, nil
 }
 
-func FindByLimit[T Model](maxLimit int) []T {
+func FindByLimit[T Model](maxLimit int) ([]T, error) {
 	var retval []T
 	limit := maxLimit
 	if limit <= 0 {
 		limit = 1000
 	}
-	result := Db.Find(&retval).Limit(limit)
+	result := Db.Limit(limit).Find(&retval)
 	if result.Error != nil {
-		return []T{}
+		return []T{}, result.Error
 	}
-	return retval
+	return retval, nil
 }
 
 func Create[T Model](model *T) error {
@@ -44,13 +44,14 @@ func Create[T Model](model *T) error {
 }
 
 func FindById[T Model, ID any](model T, id ID) (T, error) {
-	result := Db.First(&model, id)
-	return model, result.Error
+	var retval = model
+	result := Db.First(&retval, id)
+	return retval, result.Error
 }
 
-// 跟新model，前提是这个model必须带有id
+// UpdateById :跟新model，前提是这个model必须带有id
 func UpdateById[T Model](model T) error {
-	if model.Id() == nil {
+	if model.IdValue() == nil {
 		return errors.New("id can't be nil")
 	}
 	result := Db.Save(&model)
@@ -60,4 +61,12 @@ func UpdateById[T Model](model T) error {
 func DeleteById[T Model, ID any](model T, id ID) error {
 	result := Db.Delete(&model, id)
 	return result.Error
+}
+
+func Total[T Model](model T) (int64, error) {
+	var count int64
+	if err := Db.Model(&model).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
 }
