@@ -102,6 +102,7 @@ func Get(c *gin.Context) {
 		count, er := db.Total(&User{})
 		if er != nil {
 			c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
+			return
 		}
 		ret := struct {
 			Total any    `json:"total"`

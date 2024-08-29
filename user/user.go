@@ -14,7 +14,9 @@ func init() {
 func Init(gin *gin.Engine) {
 	group := gin.Group("user")
 	jwtAuth := middleware.MakeJWT()
-	group.Use(handlerMiddleWare(jwtAuth))
+	authInitialCheck := handlerMiddleWare(jwtAuth)
+	group.Use(authInitialCheck)
+	group.Use(jwtAuth.MiddlewareFunc())
 	{
 		group.POST("", Add)
 		group.DELETE("/:id", Delete)
@@ -28,7 +30,7 @@ func handlerMiddleWare(authMiddleware *jwt.GinJWTMiddleware) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		errInit := authMiddleware.MiddlewareInit()
 		if errInit != nil {
-			panic("JWt middleware init error")
+			panic(errInit.Error())
 		}
 	}
 }
