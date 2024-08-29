@@ -2,16 +2,16 @@ package user
 
 import (
 	"GinDemo/db"
+	"GinDemo/model"
 	"GinDemo/uilty"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
-
-	"github.com/gin-gonic/gin"
 )
 
 // 增加用户
 func Add(c *gin.Context) {
-	var user User
+	var user model.User
 	if err := c.ShouldBind(&user); err != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "缺少参数", Code: -1})
 		return
@@ -32,7 +32,7 @@ func Delete(c *gin.Context) {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 		return
 	}
-	user := User{Id: &num}
+	user := model.User{Id: &num}
 	_, er := db.FindById(user, num)
 	if er != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "用户不存在", Code: -1})
@@ -48,12 +48,12 @@ func Delete(c *gin.Context) {
 
 // 跟新用户
 func Update(c *gin.Context) {
-	var reQuestUser User
+	var reQuestUser model.User
 	if err := c.ShouldBind(&reQuestUser); err != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "缺少参数", Code: -1})
 		return
 	}
-	if !reQuestUser.isValidWhenUpdate() {
+	if !reQuestUser.IsValidWhenUpdate() {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "缺少参数", Code: -1})
 		return
 	}
@@ -94,18 +94,18 @@ func Get(c *gin.Context) {
 			return
 		}
 		pageCxt := db.PageContext{Page: p, PageSize: m}
-		retval, err := db.PageFind[User](pageCxt)
+		retval, err := db.PageFind[model.User](pageCxt)
 		if err != nil {
 			c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 			return
 		}
-		count, er := db.Total(&User{})
+		count, er := db.Total(&model.User{})
 		if er != nil {
 			c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 		}
 		ret := struct {
-			Total any    `json:"total"`
-			Users []User `json:"users"`
+			Total any          `json:"total"`
+			Users []model.User `json:"users"`
 		}{
 			Total: count,
 			Users: retval,
@@ -115,7 +115,7 @@ func Get(c *gin.Context) {
 		return
 	}
 	if maxNum == "" {
-		result, err1 := db.FindByLimit[User](-1)
+		result, err1 := db.FindByLimit[model.User](-1)
 		if err1 != nil {
 			c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err1.Error()})
 			return
@@ -128,7 +128,7 @@ func Get(c *gin.Context) {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 		return
 	}
-	result, err1 := db.FindByLimit[User](num)
+	result, err1 := db.FindByLimit[model.User](num)
 	if err1 != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err1.Error()})
 		return
@@ -144,7 +144,7 @@ func ById(c *gin.Context) {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 		return
 	}
-	find := User{Id: &num}
+	find := model.User{Id: &num}
 	user, er := db.FindById(find, find.IdValue())
 	if er != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "用户不存在", Code: -1})

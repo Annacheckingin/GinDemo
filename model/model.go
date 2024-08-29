@@ -1,4 +1,4 @@
-package user
+package model
 
 import (
 	"time"
@@ -21,7 +21,7 @@ func (User) TableName() string {
 	return "users"
 }
 
-func (u User) isValidWhenUpdate() bool {
+func (u User) IsValidWhenUpdate() bool {
 	if u.Name == nil && u.Password == nil {
 		return false
 	}
