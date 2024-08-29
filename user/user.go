@@ -13,7 +13,8 @@ func init() {
 
 func Init(gin *gin.Engine) {
 	group := gin.Group("user")
-	group.Use(handlerMiddleWare(middleware.MakeJWT()))
+	jwtAuth := middleware.MakeJWT()
+	group.Use(handlerMiddleWare(jwtAuth))
 	{
 		group.POST("", Add)
 		group.DELETE("/:id", Delete)

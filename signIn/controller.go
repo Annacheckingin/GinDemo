@@ -10,7 +10,7 @@ func SignUp(c *gin.Context) {
 
 }
 
-func quit(c *gin.Context) {
+func Quit(c *gin.Context) {
 
 }
 
