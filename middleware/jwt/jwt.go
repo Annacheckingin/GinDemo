@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+const JWT_SUB_CONTEXT_KEY = "JWT_SUB_CONTEXT_KEY"
+
 func init() {
 	key, err := generateECDSAKeyPair()
 	if err != nil {
@@ -39,18 +41,18 @@ func getPublicKey(privateKey *ecdsa.PrivateKey) *ecdsa.PublicKey {
 	return &privateKey.PublicKey
 }
 
-func SimpleJwt(expire time.Duration) (string, error) {
+func SimpleJwt(expire time.Duration, sub string) (string, error) {
 	var (
 		key *ecdsa.PrivateKey
 		t   *jwt.Token
 		s   string
 	)
-
 	key = privateKey
 	//t = jwt.New(jwt.SigningMethodHS256)
 	t = jwt.NewWithClaims(jwt.SigningMethodES256,
 		jwt.MapClaims{
 			"exp": time.Now().Add(expire).Unix(),
+			"sub": sub,
 		})
 	s, er := t.SignedString(key)
 	if er != nil {
@@ -59,14 +61,41 @@ func SimpleJwt(expire time.Duration) (string, error) {
 	return s, nil
 }
 
-func ParseSimpleToken(token string) bool {
-	jwtToken, er := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-		return publicKey, nil
-	}, jwt.WithExpirationRequired())
-	if er != nil {
-		return false
+// sub不传表示不校验sub
+func ValidateToken(token string, sub *string) bool {
+
+	if sub != nil {
+		jwtToken, er := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+			return publicKey, nil
+		}, jwt.WithExpirationRequired(), jwt.WithSubject(*sub))
+		if er != nil {
+			return false
+		}
+		return jwtToken.Valid
+	} else {
+		jwtToken, er := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+			return publicKey, nil
+		}, jwt.WithExpirationRequired())
+		if er != nil {
+			return false
+		}
+		return jwtToken.Valid
 	}
-	return jwtToken.Valid
+}
+
+func GetSubFromJwtToken(token string) *string {
+	claims := &jwt.MapClaims{}
+	tok, er := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return publicKey, nil
+	})
+	if er != nil {
+		return nil
+	}
+	str, err := tok.Claims.GetSubject()
+	if err != nil {
+		return nil
+	}
+	return &str
 }
 
 func SimpleJwtAuthMiddleware() gin.HandlerFunc {
@@ -84,11 +113,18 @@ func SimpleJwtAuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		if !ParseSimpleToken(tokenString) {
-			uilty.ErrorMessage(c, "Token校验失败")
+		if !ValidateToken(tokenString, nil) {
+			uilty.ErrorMessage(c, "Token已过期")
 			c.Abort()
 			return
 		}
+		sub := GetSubFromJwtToken(tokenString)
+		if sub == nil || len(*sub) == 0 {
+			uilty.ErrorMessage(c, "令牌不正确")
+			c.Abort()
+			return
+		}
+		c.Set(JWT_SUB_CONTEXT_KEY, sub)
 		c.Next()
 	}
 }

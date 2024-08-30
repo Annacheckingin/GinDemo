@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+const expireSeconds time.Duration = 60 * 60 * time.Second
+
 func SignIn(c *gin.Context) {
 	usr := model.User{}
 	if er := c.ShouldBindBodyWith(&usr, binding.JSON); er != nil {
@@ -48,20 +50,32 @@ func SignUp(c *gin.Context) {
 	SignIn(c)
 }
 
-func insertNewUserRecord(gin *gin.Context, user model.User) (model.User, error) {
-	er := mysql.Create(&user)
-	return user, er
+func insertNewUserRecord(gin *gin.Context, user model.User) (*model.User, error) {
+	var count int64
+	result := mysql.Db.Where("user_name = ?", user.Name).Find(&model.User{}).Count(&count)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if count != 0 {
+		return nil, fmt.Errorf("用户已存在")
+	}
+	er := mysql.Db.Create(&user)
+	if er != nil {
+		return nil, er.Error
+
+	}
+	return &user, nil
 }
 
 func signIn(user model.User) (string, error) {
-	token, er := jwt.SimpleJwt(60 * time.Second)
+	token, er := jwt.SimpleJwt(expireSeconds, *user.Name)
 	if er != nil {
 		return "", er
 	}
 	if len(*user.Name) == 0 {
 		return "", fmt.Errorf("用户名为空")
 	}
-	er = noSql.SetString(*user.Name, token, 60*time.Second)
+	er = noSql.SetString(*user.Name, token, expireSeconds)
 	if er != nil {
 		return "", er
 	}

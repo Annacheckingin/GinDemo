@@ -23,6 +23,11 @@ func init() {
 	}
 }
 
+func Get(key string) *string {
+	val := RedisClient.Get(ctx, key).Val()
+	return &val
+}
+
 func SetString(key string, value string, expiration time.Duration) error {
 	return RedisClient.Set(ctx, key, value, expiration).Err()
 }
