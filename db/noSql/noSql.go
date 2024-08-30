@@ -9,7 +9,7 @@ import (
 
 var ctx = context.Background()
 
-// / noSql connection
+// RedisClient redis connection
 var RedisClient *redis.Client
 
 func init() {
@@ -25,4 +25,8 @@ func init() {
 
 func SetString(key string, value string, expiration time.Duration) error {
 	return RedisClient.Set(ctx, key, value, expiration).Err()
+}
+
+func RemoveString(key string) error {
+	return RedisClient.Del(ctx, key).Err()
 }

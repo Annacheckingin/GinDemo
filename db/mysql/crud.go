@@ -59,7 +59,14 @@ func UpdateById[T Model](model T) error {
 }
 
 func DeleteById[T Model, ID any](model T, id ID) error {
-	result := Db.Delete(&model, id)
+	intId, ok := any(id).(int)
+	if !ok {
+		return errors.New("id can't be empty")
+	}
+	if intId == 0 {
+		return errors.New("id can't be empty")
+	}
+	result := Db.Delete(&model, intId)
 	return result.Error
 }
 

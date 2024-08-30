@@ -69,9 +69,27 @@ func signIn(user model.User) (string, error) {
 }
 
 func Quit(c *gin.Context) {
-
+	usr := model.User{}
+	if er := c.ShouldBindBodyWith(&usr, binding.JSON); er != nil {
+		uilty.ErrorMessage(c, "传参有误")
+		return
+	}
+	if (len(*usr.Name)) == 0 {
+		uilty.ErrorMessage(c, "传参有误")
+		return
+	}
+	er := noSql.RemoveString(*usr.Name)
+	if er != nil {
+		uilty.Error(c, er)
+	}
+	uilty.Done(c)
 }
 
 func Logout(c *gin.Context) {
-
+	usr := model.User{}
+	if er := mysql.DeleteById(usr, usr.IdValue()); er != nil {
+		uilty.Error(c, er)
+		return
+	}
+	Quit(c)
 }
