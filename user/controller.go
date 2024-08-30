@@ -1,22 +1,22 @@
 package user
 
 import (
-	"GinDemo/db"
-	"GinDemo/model"
+	"GinDemo/db/mysql"
 	"GinDemo/uilty"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 // 增加用户
 func Add(c *gin.Context) {
-	var user model.User
+	var user User
 	if err := c.ShouldBind(&user); err != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "缺少参数", Code: -1})
 		return
 	}
-	err := db.Create(&user)
+	err := mysql.Create(&user)
 	if err != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "添加用户失败" + err.Error(), Code: -1})
 		return
@@ -32,13 +32,13 @@ func Delete(c *gin.Context) {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 		return
 	}
-	user := model.User{Id: &num}
-	_, er := db.FindById(user, num)
+	user := User{Id: &num}
+	_, er := mysql.FindById(user, num)
 	if er != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "用户不存在", Code: -1})
 		return
 	}
-	er = db.DeleteById(user, user.IdValue())
+	er = mysql.DeleteById(user, user.IdValue())
 	if er != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "删除用户失败", Code: -1})
 		return
@@ -48,12 +48,12 @@ func Delete(c *gin.Context) {
 
 // 跟新用户
 func Update(c *gin.Context) {
-	var reQuestUser model.User
+	var reQuestUser User
 	if err := c.ShouldBind(&reQuestUser); err != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "缺少参数", Code: -1})
 		return
 	}
-	if !reQuestUser.IsValidWhenUpdate() {
+	if !reQuestUser.isValidWhenUpdate() {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "缺少参数", Code: -1})
 		return
 	}
@@ -63,7 +63,7 @@ func Update(c *gin.Context) {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 		return
 	}
-	user, er := db.FindById(reQuestUser, num)
+	user, er := mysql.FindById(reQuestUser, num)
 	if er != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "用户不存在", Code: -1})
 		return
@@ -74,7 +74,7 @@ func Update(c *gin.Context) {
 	if reQuestUser.Password != nil {
 		user.Password = reQuestUser.Password
 	}
-	er = db.UpdateById(user)
+	er = mysql.UpdateById(user)
 	if er != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "更新失败" + er.Error(), Code: -1})
 		return
@@ -93,19 +93,20 @@ func Get(c *gin.Context) {
 			c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 			return
 		}
-		pageCxt := db.PageContext{Page: p, PageSize: m}
-		retval, err := db.PageFind[model.User](pageCxt)
+		pageCxt := mysql.PageContext{Page: p, PageSize: m}
+		retval, err := mysql.PageFind[User](pageCxt)
 		if err != nil {
 			c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 			return
 		}
-		count, er := db.Total(&model.User{})
+		count, er := mysql.Total(&User{})
 		if er != nil {
 			c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
+			return
 		}
 		ret := struct {
-			Total any          `json:"total"`
-			Users []model.User `json:"users"`
+			Total any    `json:"total"`
+			Users []User `json:"users"`
 		}{
 			Total: count,
 			Users: retval,
@@ -115,7 +116,7 @@ func Get(c *gin.Context) {
 		return
 	}
 	if maxNum == "" {
-		result, err1 := db.FindByLimit[model.User](-1)
+		result, err1 := mysql.FindByLimit[User](-1)
 		if err1 != nil {
 			c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err1.Error()})
 			return
@@ -128,7 +129,7 @@ func Get(c *gin.Context) {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 		return
 	}
-	result, err1 := db.FindByLimit[model.User](num)
+	result, err1 := mysql.FindByLimit[User](num)
 	if err1 != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err1.Error()})
 		return
@@ -144,8 +145,8 @@ func ById(c *gin.Context) {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 		return
 	}
-	find := model.User{Id: &num}
-	user, er := db.FindById(find, find.IdValue())
+	find := User{Id: &num}
+	user, er := mysql.FindById(find, find.IdValue())
 	if er != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "用户不存在", Code: -1})
 		return
