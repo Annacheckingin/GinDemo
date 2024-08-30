@@ -1,7 +1,7 @@
 package user
 
 import (
-	"GinDemo/db"
+	"GinDemo/db/mysql"
 	"GinDemo/uilty"
 	"net/http"
 	"strconv"
@@ -16,7 +16,7 @@ func Add(c *gin.Context) {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "缺少参数", Code: -1})
 		return
 	}
-	err := db.Create(&user)
+	err := mysql.Create(&user)
 	if err != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "添加用户失败" + err.Error(), Code: -1})
 		return
@@ -33,12 +33,12 @@ func Delete(c *gin.Context) {
 		return
 	}
 	user := User{Id: &num}
-	_, er := db.FindById(user, num)
+	_, er := mysql.FindById(user, num)
 	if er != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "用户不存在", Code: -1})
 		return
 	}
-	er = db.DeleteById(user, user.IdValue())
+	er = mysql.DeleteById(user, user.IdValue())
 	if er != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "删除用户失败", Code: -1})
 		return
@@ -63,7 +63,7 @@ func Update(c *gin.Context) {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 		return
 	}
-	user, er := db.FindById(reQuestUser, num)
+	user, er := mysql.FindById(reQuestUser, num)
 	if er != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "用户不存在", Code: -1})
 		return
@@ -74,7 +74,7 @@ func Update(c *gin.Context) {
 	if reQuestUser.Password != nil {
 		user.Password = reQuestUser.Password
 	}
-	er = db.UpdateById(user)
+	er = mysql.UpdateById(user)
 	if er != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "更新失败" + er.Error(), Code: -1})
 		return
@@ -93,13 +93,13 @@ func Get(c *gin.Context) {
 			c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 			return
 		}
-		pageCxt := db.PageContext{Page: p, PageSize: m}
-		retval, err := db.PageFind[User](pageCxt)
+		pageCxt := mysql.PageContext{Page: p, PageSize: m}
+		retval, err := mysql.PageFind[User](pageCxt)
 		if err != nil {
 			c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 			return
 		}
-		count, er := db.Total(&User{})
+		count, er := mysql.Total(&User{})
 		if er != nil {
 			c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 			return
@@ -116,7 +116,7 @@ func Get(c *gin.Context) {
 		return
 	}
 	if maxNum == "" {
-		result, err1 := db.FindByLimit[User](-1)
+		result, err1 := mysql.FindByLimit[User](-1)
 		if err1 != nil {
 			c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err1.Error()})
 			return
@@ -129,7 +129,7 @@ func Get(c *gin.Context) {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err.Error(), Code: -1})
 		return
 	}
-	result, err1 := db.FindByLimit[User](num)
+	result, err1 := mysql.FindByLimit[User](num)
 	if err1 != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: err1.Error()})
 		return
@@ -146,7 +146,7 @@ func ById(c *gin.Context) {
 		return
 	}
 	find := User{Id: &num}
-	user, er := db.FindById(find, find.IdValue())
+	user, er := mysql.FindById(find, find.IdValue())
 	if er != nil {
 		c.JSON(http.StatusOK, uilty.ErrorResponseDefault{Message: "用户不存在", Code: -1})
 		return

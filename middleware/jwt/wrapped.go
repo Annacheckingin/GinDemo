@@ -1,4 +1,4 @@
-package middleware
+package jwt
 
 import (
 	"GinDemo/uilty"
@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type JWTExample struct {
+type JWTPayloadExtract struct {
 	Sub  string `json:"sub"`
 	Name string `json:"name"`
 }
@@ -19,7 +19,16 @@ func Init(gin *gin.Engine) {
 
 }
 
-func MakeJWT() *jwt.GinJWTMiddleware {
+func HandlerMiddleWare(authMiddleware *jwt.GinJWTMiddleware) gin.HandlerFunc {
+	return func(context *gin.Context) {
+		errInit := authMiddleware.MiddlewareInit()
+		if errInit != nil {
+			panic(errInit.Error())
+		}
+	}
+}
+
+func JwtDomain() *jwt.GinJWTMiddleware {
 	return initParams()
 }
 
@@ -46,7 +55,7 @@ func identityHandler() func(*gin.Context) interface{} {
 		claims := jwt.ExtractClaims(c)
 		name := claims["name"].(string)
 		sub := claims["sub"].(string)
-		ret := JWTExample{Sub: sub, Name: name}
+		ret := JWTPayloadExtract{Sub: sub, Name: name}
 		return &ret
 	}
 }
@@ -54,7 +63,7 @@ func identityHandler() func(*gin.Context) interface{} {
 // 对jwt进行校验——时间和完整性等基本校验已经提前完成
 func authorizator() func(data interface{}, c *gin.Context) bool {
 	return func(data interface{}, c *gin.Context) bool {
-		if _, ok := data.(*JWTExample); ok {
+		if _, ok := data.(*JWTPayloadExtract); ok {
 			return true
 		}
 		return true
@@ -63,12 +72,7 @@ func authorizator() func(data interface{}, c *gin.Context) bool {
 
 func payloadFunc() func(data interface{}) jwt.MapClaims {
 	return func(data interface{}) jwt.MapClaims {
-		if v, ok := data.(*JWTExample); ok {
-			/**
-			   "sub": "1234567890",
-			  "name": "John Doe",
-			  "exp":1735689600
-			*/
+		if v, ok := data.(*JWTPayloadExtract); ok {
 			return jwt.MapClaims{
 				"name": v.Name,
 				"sub":  v.Sub,
@@ -82,6 +86,7 @@ func payloadFunc() func(data interface{}) jwt.MapClaims {
 // identityKey所设置的字符串——即为jwt的payload当中同·sub·这样的key同级的存在
 func authenticator() func(c *gin.Context) (interface{}, error) {
 	return func(c *gin.Context) (interface{}, error) {
+
 		return nil, nil
 	}
 }
