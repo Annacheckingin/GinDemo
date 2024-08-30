@@ -5,8 +5,8 @@ import (
 	"GinDemo/db/noSql"
 	_ "GinDemo/db/noSql"
 	"GinDemo/middleware/jwt"
+	"GinDemo/model"
 	"GinDemo/uilty"
-	"GinDemo/user"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -14,7 +14,7 @@ import (
 )
 
 func SignIn(c *gin.Context) {
-	usr := user.User{}
+	usr := model.User{}
 	if er := c.ShouldBindBodyWith(&usr, binding.JSON); er != nil {
 		uilty.ErrorMessage(c, er.Error())
 		return
@@ -25,8 +25,8 @@ func SignIn(c *gin.Context) {
 		return
 	}
 	ret := struct {
-		User          user.User `json:"user"`
-		Authorization string    `json:"Authorization"`
+		User          model.User `json:"user"`
+		Authorization string     `json:"Authorization"`
 	}{
 		User:          usr,
 		Authorization: token,
@@ -35,7 +35,7 @@ func SignIn(c *gin.Context) {
 }
 
 func SignUp(c *gin.Context) {
-	usr := user.User{}
+	usr := model.User{}
 	if er := c.ShouldBindBodyWith(&usr, binding.JSON); er != nil {
 		uilty.ErrorMessage(c, "传参有误")
 		return
@@ -48,12 +48,12 @@ func SignUp(c *gin.Context) {
 	SignIn(c)
 }
 
-func insertNewUserRecord(gin *gin.Context, user user.User) (user.User, error) {
+func insertNewUserRecord(gin *gin.Context, user model.User) (model.User, error) {
 	er := mysql.Create(&user)
 	return user, er
 }
 
-func signIn(user user.User) (string, error) {
+func signIn(user model.User) (string, error) {
 	token, er := jwt.SimpleJwt(60 * time.Second)
 	if er != nil {
 		return "", er
