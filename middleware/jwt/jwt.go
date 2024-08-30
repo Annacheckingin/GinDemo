@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"math/rand"
-	"strings"
 	"time"
 )
 
@@ -100,14 +99,8 @@ func GetSubFromJwtToken(token string) *string {
 
 func SimpleJwtAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		payload := c.GetHeader("Authorization")
-		parts := strings.Split(payload, " ")
-		if len(parts) != 2 {
-			uilty.ErrorMessage(c, "token格式不对")
-			c.Abort()
-			return
-		}
-		tokenString := parts[1]
+		token := uilty.JwtTokenFecth(c)
+		tokenString := *token
 		if len(tokenString) == 0 {
 			uilty.ErrorMessage(c, "token格式不对")
 			c.Abort()

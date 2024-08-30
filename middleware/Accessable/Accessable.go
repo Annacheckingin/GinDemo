@@ -29,6 +29,12 @@ func AccessableMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		tokenString := uilty.JwtTokenFecth(c)
+		if tokenString != value {
+			uilty.ErrorMessage(c, "token已过期")
+			c.Abort()
+			return
+		}
 		c.Next()
 	}
 
